@@ -16,7 +16,7 @@ SEM_LIMIT = 10  # parallel workers
 
 
 # -------------------------------
-# CLASSIFY FOR PELLIMELAM
+# CLASSIFY
 # -------------------------------
 def classify_use(name, desc):
     text = (name + " " + desc).lower()
@@ -34,83 +34,113 @@ def classify_use(name, desc):
 
 
 # -------------------------------
-# EXTRACT LIST (1000+)
+# EXTRACT LIST + DIRECT LINKS
 # -------------------------------
 def extract_list(soup, url):
+    festivals = []
+
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+
+        # direct detail page links
+        if "-date-time" in href:
+            name = a.get_text(strip=True)
+
+            festivals.append({
+                "name": name,
+                "detail_url": "https://www.drikpanchang.com" + href,
+                "month_source": url
+            })
+
+    # fallback for rows without links
     text = soup.get_text("\n")
     lines = [l.strip() for l in text.split("\n") if l.strip()]
-
-    festivals = []
 
     for i in range(len(lines)):
         line = lines[i]
 
         if "2026" in line and "," in line:
-            try:
-                name = lines[i-1]
+            name = lines[i-1]
 
-                festivals.append({
-                    "name": name,
-                    "date_raw": line,
-                    "month_source": url
-                })
-            except:
-                continue
+            festivals.append({
+                "name": name,
+                "date_raw": line,
+                "month_source": url
+            })
 
     return festivals
 
 
 # -------------------------------
-# EXTRACT DETAILS
+# EXTRACT FULL DETAILS
 # -------------------------------
 def extract_details(soup):
-    text = soup.get_text("\n")
-    lines = [l.strip() for l in text.split("\n") if l.strip()]
-
     data = {}
 
-    for line in lines:
-        if "Tithi Begins" in line:
-            data["tithi_start"] = line
-        if "Tithi Ends" in line:
-            data["tithi_end"] = line
+    # TITLE
+    h1 = soup.find("h1")
+    if h1:
+        data["title"] = h1.get_text(strip=True)
 
-    for line in lines:
-        if "Moonrise" in line:
-            data["moonrise"] = line
+    # TIMINGS
+    timings = []
+    for tag in soup.find_all(["p", "div"]):
+        text = tag.get_text(" ", strip=True)
 
-    desc = []
-    for line in lines:
-        if len(line) > 50:
-            desc.append(line)
-        if len(desc) > 8:
+        if any(x in text for x in [
+            "Tithi Begins",
+            "Tithi Ends",
+            "Moonrise",
+            "Jayanti on",
+            "Timings"
+        ]):
+            timings.append(text)
+
+    data["timings"] = timings
+
+    # DESCRIPTION (clean)
+    description = []
+    for p in soup.find_all("p"):
+        text = p.get_text(" ", strip=True)
+
+        if len(text) > 80 and "timings are represented" not in text.lower():
+            description.append(text)
+
+        if len(description) >= 3:
             break
 
-    data["description"] = " ".join(desc)
+    data["description"] = " ".join(description)
 
     return data
 
 
 # -------------------------------
-# PARALLEL ENRICHMENT
+# ENRICH ONE
 # -------------------------------
 async def enrich_festival(browser, fest, sem):
     async with sem:
         try:
             page = await browser.new_page()
 
-            search_url = f"https://www.drikpanchang.com/search?q={fest['name'].replace(' ', '+')}"
-            await page.goto(search_url, timeout=60000)
+            link = fest.get("detail_url")
 
-            link = await page.evaluate("""
-            () => {
-                let a = document.querySelector("a[href*='date-time']");
-                return a ? a.href : null;
-            }
-            """)
+            # fallback search if no direct link
+            if not link:
+                search_url = f"https://www.drikpanchang.com/search?q={fest['name'].replace(' ', '+')}"
+                await page.goto(search_url)
+
+                link = await page.evaluate("""
+                () => {
+                    let links = document.querySelectorAll("a");
+                    for (let a of links) {
+                        if (a.href.includes("-date-time")) return a.href;
+                    }
+                    return null;
+                }
+                """)
 
             if link:
-                await page.goto(link, timeout=60000)
+                await page.goto(link)
 
                 html = await page.content()
                 soup = BeautifulSoup(html, "lxml")
@@ -124,12 +154,12 @@ async def enrich_festival(browser, fest, sem):
             pass
 
 
-async def enrich_all(browser, all_festivals):
+async def enrich_all(browser, festivals):
     sem = asyncio.Semaphore(SEM_LIMIT)
 
     tasks = [
         enrich_festival(browser, fest, sem)
-        for fest in all_festivals[:300]  # limit for speed
+        for fest in festivals
     ]
 
     await asyncio.gather(*tasks)
@@ -146,12 +176,12 @@ async def main():
         context = await browser.new_context()
         page = await context.new_page()
 
-        # STEP 1: Collect festivals
+        # STEP 1: COLLECT ALL FESTIVALS
         for month in MONTHS:
             url = MONTH_URL.format(month)
             print(f"Fetching {month}...")
 
-            await page.goto(url, timeout=60000)
+            await page.goto(url)
             await page.wait_for_timeout(4000)
 
             html = await page.content()
@@ -160,34 +190,33 @@ async def main():
             data = extract_list(soup, url)
             all_festivals.extend(data)
 
-        print(f"\nCollected {len(all_festivals)} raw festivals")
+        print(f"\nCollected {len(all_festivals)} festivals")
 
-        # STEP 2: Parallel enrichment
+        # STEP 2: ENRICH ALL (parallel)
         await enrich_all(browser, all_festivals)
 
         await browser.close()
 
-    # STEP 3: Remove duplicates
+    # REMOVE DUPLICATES
     unique = {}
     for f in all_festivals:
-        key = (f["name"], f["date_raw"])
+        key = f.get("detail_url") or (f.get("name"), f.get("date_raw"))
         unique[key] = f
 
-    final_data = list(unique.values())
+    final = list(unique.values())
 
-    # STEP 4: Classify
-    for f in final_data:
+    # CLASSIFY
+    for f in final:
         f["pellimelam_use"] = classify_use(
             f.get("name",""),
             f.get("description","")
         )
 
-    # STEP 5: Save
+    # SAVE
     with open("hindu_festivals_2026_full.json", "w", encoding="utf-8") as f:
-        json.dump(final_data, f, indent=2, ensure_ascii=False)
+        json.dump(final, f, indent=2, ensure_ascii=False)
 
-    print(f"\n✅ FINAL DATASET: {len(final_data)} festivals saved")
+    print(f"\n✅ FINAL: {len(final)} festivals saved")
 
 
-# RUN
 asyncio.run(main())
