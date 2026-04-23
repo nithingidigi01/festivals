@@ -24,7 +24,7 @@ def clean(text):
 
 
 # -------------------------------
-# STEP 1: EXTRACT LIST (ROBUST)
+# EXTRACT FESTIVAL LIST
 # -------------------------------
 def extract_list(soup, month):
     festivals = []
@@ -42,47 +42,76 @@ def extract_list(soup, month):
             festivals.append({
                 "name": clean(name),
                 "date": clean(lines[i]),
-                "month": month.capitalize()
+                "month": month.capitalize(),
+                "detail_url": None,
+                "tithi_start": None,
+                "tithi_end": None,
+                "moonrise": None,
+                "description": None
             })
 
     return festivals
 
 
 # -------------------------------
-# STEP 2: FIND DETAIL PAGE VIA SEARCH
+# GET VALID DETAIL URL
 # -------------------------------
 async def get_detail_url(page, name):
     try:
         search_url = f"{BASE}/search?q={name.replace(' ', '+')}"
         await page.goto(search_url, timeout=60000)
 
-        # find first valid festival link
-        link = await page.evaluate("""
+        links = await page.evaluate("""
         () => {
-            let links = document.querySelectorAll("a");
-            for (let a of links) {
-                let href = a.href;
-                if (href.includes("/vrat/") || 
-                    href.includes("/sankranti/") || 
-                    href.includes("/festivals/")) {
-                    return href;
+            let results = [];
+            document.querySelectorAll("a").forEach(a => {
+                if (a.href && a.innerText) {
+                    results.push({
+                        text: a.innerText.trim(),
+                        href: a.href
+                    });
                 }
-            }
-            return null;
+            });
+            return results;
         }
         """)
 
-        return link
+        valid = []
+
+        for l in links:
+            href = l["href"]
+
+            if (
+                ("-date-time" in href or "-dates" in href)
+                and "calendar" not in href
+                and "panchang" not in href
+            ):
+                valid.append(l)
+
+        # Best match
+        for l in valid:
+            if name.lower() in l["text"].lower():
+                return l["href"]
+
+        if valid:
+            return valid[0]["href"]
+
+        return None
 
     except:
         return None
 
 
 # -------------------------------
-# STEP 3: EXTRACT DETAILS
+# EXTRACT DETAILS
 # -------------------------------
 def extract_details(soup):
-    data = {}
+    data = {
+        "tithi_start": None,
+        "tithi_end": None,
+        "moonrise": None,
+        "description": None
+    }
 
     text = soup.get_text("\n")
     lines = [l.strip() for l in text.split("\n") if l.strip()]
@@ -102,37 +131,46 @@ def extract_details(soup):
         txt = clean(p.get_text())
 
         if (
-            len(txt) > 100
+            len(txt) > 120
             and "timings are represented" not in txt.lower()
             and "discover more" not in txt.lower()
+            and "copyright" not in txt.lower()
         ):
             desc.append(txt)
 
         if len(desc) >= 2:
             break
 
-    data["description"] = " ".join(desc)
+    if desc:
+        data["description"] = " ".join(desc)
 
     return data
 
 
 # -------------------------------
-# STEP 4: PROCESS ONE FESTIVAL
+# PROCESS FESTIVAL
 # -------------------------------
 async def process_festival(browser, fest, sem):
     async with sem:
         try:
             page = await browser.new_page()
 
-            # get detail page
             url = await get_detail_url(page, fest["name"])
+
+            # strict validation
+            if url and not ("-date-time" in url or "-dates" in url):
+                url = None
+
             fest["detail_url"] = url
 
             if url:
                 await page.goto(url, timeout=60000)
-                soup = BeautifulSoup(await page.content(), "lxml")
+                await page.wait_for_load_state("networkidle")
 
-                fest.update(extract_details(soup))
+                soup = BeautifulSoup(await page.content(), "lxml")
+                details = extract_details(soup)
+
+                fest.update(details)
 
             await page.close()
 
@@ -156,7 +194,7 @@ async def main():
 
         page = await context.new_page()
 
-        # STEP 1: COLLECT ALL FESTIVALS
+        # STEP 1: COLLECT
         for month in MONTHS:
             url = MONTH_URL.format(month)
             print(f"Fetching {month}...")
@@ -171,7 +209,7 @@ async def main():
 
         print(f"\nCollected: {len(all_festivals)}")
 
-        # STEP 2: PARALLEL DETAIL EXTRACTION
+        # STEP 2: ENRICH
         sem = asyncio.Semaphore(SEM_LIMIT)
         tasks = [process_festival(browser, f, sem) for f in all_festivals[:300]]
 
@@ -179,11 +217,24 @@ async def main():
 
         await browser.close()
 
-    # SAVE
-    with open("hindu_festivals_2026_full.json", "w", encoding="utf-8") as f:
-        json.dump(all_festivals, f, indent=2, ensure_ascii=False)
+    # FINAL CLEAN JSON
+    final = []
+    for f in all_festivals:
+        final.append({
+            "name": f["name"],
+            "date": f["date"],
+            "month": f["month"],
+            "tithi_start": f["tithi_start"],
+            "tithi_end": f["tithi_end"],
+            "moonrise": f["moonrise"],
+            "description": f["description"],
+            "detail_url": f["detail_url"]
+        })
 
-    print(f"\n✅ DONE: {len(all_festivals)} festivals")
+    with open("hindu_festivals_2026_full.json", "w", encoding="utf-8") as f:
+        json.dump(final, f, indent=2, ensure_ascii=False)
+
+    print(f"\n✅ FINAL JSON CREATED: {len(final)} festivals")
 
 
 asyncio.run(main())
