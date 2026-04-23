@@ -1,6 +1,6 @@
 [
   {
-    "name": ":23",
+    "name": ":51",
     "date_raw": "Thu Apr 23, 2026",
     "month": "January",
     "detail_url": null,
@@ -464,7 +464,7 @@
     "category": "General religious event"
   },
   {
-    "name": ":27",
+    "name": ":55",
     "date_raw": "Thu Apr 23, 2026",
     "month": "February",
     "detail_url": null,
@@ -816,7 +816,7 @@
     "category": "General religious event"
   },
   {
-    "name": ":29",
+    "name": ":57",
     "date_raw": "Thu Apr 23, 2026",
     "month": "March",
     "detail_url": null,
@@ -1392,7 +1392,7 @@
     "category": "Temple pooja / devotional music"
   },
   {
-    "name": ":31",
+    "name": ":00",
     "date_raw": "Thu Apr 23, 2026",
     "month": "April",
     "detail_url": null,
@@ -1864,7 +1864,7 @@
     "category": "Temple pooja / devotional music"
   },
   {
-    "name": ":34",
+    "name": ":02",
     "date_raw": "Thu Apr 23, 2026",
     "month": "May",
     "detail_url": null,
@@ -2248,7 +2248,7 @@
     "category": "General religious event"
   },
   {
-    "name": ":36",
+    "name": ":04",
     "date_raw": "Thu Apr 23, 2026",
     "month": "June",
     "detail_url": null,
@@ -2608,7 +2608,7 @@
     "category": "General religious event"
   },
   {
-    "name": ":39",
+    "name": ":06",
     "date_raw": "Thu Apr 23, 2026",
     "month": "July",
     "detail_url": null,
@@ -2976,7 +2976,7 @@
     "category": "General religious event"
   },
   {
-    "name": ":41",
+    "name": ":09",
     "date_raw": "Thu Apr 23, 2026",
     "month": "August",
     "detail_url": null,
@@ -3243,8 +3243,9 @@
     "name": "Malayalam New Year",
     "date_raw": "August 17, 2026, Monday",
     "month": "August",
-    "detail_url": null,
+    "detail_url": "https://www.drikpanchang.com/festivals/malayalam-festivals.html",
     "source": "https://www.drikpanchang.com/festivals/month/festivals-august.html?year=2026",
+    "description": "",
     "category": "General religious event"
   },
   {
@@ -3435,8 +3436,9 @@
     "name": "Sanskrit Diwas",
     "date_raw": "August 28, 2026, Friday",
     "month": "August",
-    "detail_url": null,
+    "detail_url": "https://www.drikpanchang.com/sankranti/sankranti.html",
     "source": "https://www.drikpanchang.com/festivals/month/festivals-august.html?year=2026",
+    "description": "In Hindu calendar, there are total twelve Sankranti in a year. All twelve Sankranti can be divided into four categories which are known as Ayan, Vishuva, Vishnupadi and Shadshitimukhi Sankranti. About 12 Sankranti provides detailed information on the categorization of Sankranti and their significance in Hindu Calendar. Among all Sankranti, Makar Sankranti is the most significant one and it is observed throughout India. Due to the popularity of Makar Sankranti, it is just known as Sankranti. In South India, Makar Sankranti is observed for four days. Makar Sankranti Calendar lists all events and rituals which are followed during four days of Sankranti festivities.",
     "category": "General religious event"
   },
   {
@@ -3504,7 +3506,7 @@
     "category": "General religious event"
   },
   {
-    "name": ":43",
+    "name": ":11",
     "date_raw": "Thu Apr 23, 2026",
     "month": "September",
     "detail_url": null,
@@ -3891,9 +3893,10 @@
     "name": "Jyeshtha Gauri Avahana",
     "date_raw": "September 17, 2026, Thursday",
     "month": "September",
-    "detail_url": null,
+    "detail_url": "https://www.drikpanchang.com/marathi/festivals/gauri-puja/jyeshtha-gauri-avahana-date-time.html?year=2026",
     "source": "https://www.drikpanchang.com/festivals/month/festivals-september.html?year=2026",
-    "category": "General religious event"
+    "description": "Jyeshtha Gauri Puja is a traditional Maharashtrian festival celebrated mostly among the people of Marathi community. It is a revered Hindu ritual observed especially in Maharashtra and nearby regions, during the festive period of Ganesha Chaturthi. The celebration is centered around the welcoming and installation of Goddess Gauri and is observed on the Shukla Paksha Ashtami Tithi of Bhadrapada month. This festival symbolizes the arrival of Goddess Gauri from Her maternal home to Her in-laws' house, reflecting deep-rooted familial and cultural sentiments. The invocation of Jyeshtha Gauri is considered a family tradition, passed down through generations. In Maharashtra, it is believed that after the arrival of Lord Ganesha, Goddess Gauri visits the household, a tradition known as Gauri Avahan. This usually takes place on the Third, Fourth or Fifth day after Ganesha Chaturthi. The day following Her arrival is dedicated to Gauri Puja and the day after that marks Gauri Visarjan. In some families, two idols of Gauri are brought home, representing Jyeshtha Gauri or Maherchya Gauri, meaning Gauri from the maternal home.",
+    "category": "Temple pooja / devotional music"
   },
   {
     "name": "Vishwakarma Puja",
@@ -3955,9 +3958,10 @@
     "name": "Jyeshtha Gauri Visarjana",
     "date_raw": "September 19, 2026, Saturday",
     "month": "September",
-    "detail_url": null,
+    "detail_url": "https://www.drikpanchang.com/marathi/festivals/gauri-puja/jyeshtha-gauri-visarjana-date-time.html?year=2026",
     "source": "https://www.drikpanchang.com/festivals/month/festivals-september.html?year=2026",
-    "category": "General religious event"
+    "description": "Jyeshtha Gauri Visarjan is an important religious ritual observed in Maharashtra. This festival is primarily celebrated by the Marathi community. Jyeshtha Gauri Visarjan marks the final day of the three-day Jyeshtha Gauri Puja festival. The three-day observance includes Gauri Avahan on the first day, Gauri Puja on the second day, and Gauri Visarjan on the third day. Here, Visarjan does not signify immersion of the idol in water but rather symbolizes the ceremonial farewell of the Goddess after Her visit from Her maternal home. Just as the arrival and Visarjan of Lord Ganapati are celebrated with great enthusiasm in Maharashtra, worship and farewell of Goddess Gauri are also conducted with deep devotion and reverence. Goddess Gauri is regarded as the presiding deity of power, marital bliss and peace.",
+    "category": "Temple pooja / devotional music"
   },
   {
     "name": "Dadhichi Jayanti",
@@ -4168,7 +4172,7 @@
     "category": "General religious event"
   },
   {
-    "name": ":46",
+    "name": ":13",
     "date_raw": "Thu Apr 23, 2026",
     "month": "October",
     "detail_url": null,
@@ -4491,8 +4495,9 @@
     "name": "Tula Sankranti",
     "date_raw": "October 17, 2026, Saturday",
     "month": "October",
-    "detail_url": null,
+    "detail_url": "https://www.drikpanchang.com/sankranti/sankranti.html",
     "source": "https://www.drikpanchang.com/festivals/month/festivals-october.html?year=2026",
+    "description": "In Hindu calendar, there are total twelve Sankranti in a year. All twelve Sankranti can be divided into four categories which are known as Ayan, Vishuva, Vishnupadi and Shadshitimukhi Sankranti. About 12 Sankranti provides detailed information on the categorization of Sankranti and their significance in Hindu Calendar. Among all Sankranti, Makar Sankranti is the most significant one and it is observed throughout India. Due to the popularity of Makar Sankranti, it is just known as Sankranti. In South India, Makar Sankranti is observed for four days. Makar Sankranti Calendar lists all events and rituals which are followed during four days of Sankranti festivities.",
     "category": "General religious event"
   },
   {
@@ -4507,8 +4512,9 @@
     "name": "Saraswati Balidan",
     "date_raw": "October 18, 2026, Sunday",
     "month": "October",
-    "detail_url": null,
+    "detail_url": "https://www.drikpanchang.com/festivals/sankranti/sankranti-calendar.html",
     "source": "https://www.drikpanchang.com/festivals/month/festivals-october.html?year=2026",
+    "description": "Makar Sankranti is four days festivity period which is dedicated to Lord Sun. All rituals during Makar Sankranti are gestures of thanksgiving to natural resources which make life possible on the Earth. The Sun God is worshipped for bestowing good harvest and nurturing livestock. The cattle especially bulls and oxen are worshipped for their significance in traditionally ploughing fields. Makar Sankranti is celebrated throughout India. In North India people take holy dip in Ganga on Makar Sankranti day. Thousands of people throng Hindu pilgrimage places like Haridwar, Banaras and Allahabad to take holy dip in Ganga. It is believed that holy dip in Ganga on Sankranti purges all sins committed by the person. Makar Sankranti is also the main bathing day at Ganga Sagar Mela which is held near Kolkata. Sikh community especially in Punjab and Haryana celebrates Lohri one day before Sankranti.",
     "category": "General religious event"
   },
   {
@@ -4816,7 +4822,7 @@
     "category": "General religious event"
   },
   {
-    "name": ":48",
+    "name": ":16",
     "date_raw": "Thu Apr 23, 2026",
     "month": "November",
     "detail_url": null,
@@ -4971,8 +4977,9 @@
     "name": "Tamil Deepavali",
     "date_raw": "November 8, 2026, Sunday",
     "month": "November",
-    "detail_url": null,
+    "detail_url": "https://www.drikpanchang.com/festivals/tamil-festivals.html",
     "source": "https://www.drikpanchang.com/festivals/month/festivals-november.html?year=2026",
+    "description": "",
     "category": "General religious event"
   },
   {
@@ -5496,7 +5503,7 @@
     "category": "General religious event"
   },
   {
-    "name": ":50",
+    "name": ":18",
     "date_raw": "Thu Apr 23, 2026",
     "month": "December",
     "detail_url": null,
