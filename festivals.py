@@ -18,6 +18,13 @@ SEM_LIMIT = 10
 
 
 # -------------------------------
+# CLEAN TEXT
+# -------------------------------
+def clean_text(text):
+    return re.sub(r"\s+", " ", text).strip()
+
+
+# -------------------------------
 # CLASSIFY
 # -------------------------------
 def classify_use(name, desc):
@@ -36,47 +43,50 @@ def classify_use(name, desc):
 
 
 # -------------------------------
-# CLEAN TEXT
-# -------------------------------
-def clean_text(text):
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
-
-
-# -------------------------------
-# EXTRACT FESTIVAL LIST (CLEAN)
+# EXTRACT LIST (ROBUST)
 # -------------------------------
 def extract_list(soup, url, month):
+    text = soup.get_text("\n")
+    lines = [l.strip() for l in text.split("\n") if l.strip()]
+
     festivals = []
 
-    rows = soup.select("table tr")
+    for i in range(len(lines)):
+        line = lines[i]
 
-    for row in rows:
-        cols = [c.strip() for c in row.get_text("\n").split("\n") if c.strip()]
+        if "2026" in line and "," in line:
+            try:
+                name = lines[i-1]
 
-        if len(cols) >= 2 and "2026" in cols[1]:
-            festivals.append({
-                "name": clean_text(cols[0]),
-                "date_raw": clean_text(cols[1]),
-                "month": month.capitalize(),
-                "detail_url": None,
-                "source": url
-            })
+                if len(name) < 3:
+                    continue
+
+                festivals.append({
+                    "name": clean_text(name),
+                    "date_raw": clean_text(line),
+                    "month": month.capitalize(),
+                    "detail_url": None,
+                    "source": url
+                })
+            except:
+                continue
 
     # attach detail links
     for a in soup.find_all("a", href=True):
-        if "-date-time" in a["href"]:
+        href = a["href"]
+
+        if "-date-time" in href:
             name = clean_text(a.get_text())
 
             for f in festivals:
                 if name.lower() in f["name"].lower():
-                    f["detail_url"] = BASE + a["href"]
+                    f["detail_url"] = BASE + href
 
     return festivals
 
 
 # -------------------------------
-# EXTRACT DETAILS (STRICT + CLEAN)
+# EXTRACT DETAILS (CLEAN)
 # -------------------------------
 def extract_details(soup):
     data = {}
@@ -84,17 +94,6 @@ def extract_details(soup):
     text = soup.get_text("\n")
     lines = [l.strip() for l in text.split("\n") if l.strip()]
 
-    # -------------------
-    # DATE
-    # -------------------
-    for line in lines:
-        if "2026" in line and "," in line:
-            data["date_full"] = line
-            break
-
-    # -------------------
-    # TIMINGS (STRICT MATCH)
-    # -------------------
     for line in lines:
         if "Tithi Begins" in line:
             data["tithi_start"] = line.split("-")[-1].strip()
@@ -105,20 +104,14 @@ def extract_details(soup):
         if "Moonrise" in line:
             data["moonrise"] = line.split("-")[-1].strip()
 
-    # -------------------
-    # DESCRIPTION (FILTERED)
-    # -------------------
     desc = []
-
     for p in soup.find_all("p"):
         txt = clean_text(p.get_text())
 
         if (
             len(txt) > 120
             and "timings are represented" not in txt.lower()
-            and "choose year" not in txt.lower()
             and "discover more" not in txt.lower()
-            and "copyright" not in txt.lower()
         ):
             desc.append(txt)
 
@@ -131,7 +124,7 @@ def extract_details(soup):
 
 
 # -------------------------------
-# ENRICH ONE
+# ENRICH
 # -------------------------------
 async def enrich(browser, fest, sem):
     async with sem:
@@ -145,8 +138,7 @@ async def enrich(browser, fest, sem):
             html = await page.content()
             soup = BeautifulSoup(html, "lxml")
 
-            details = extract_details(soup)
-            fest.update(details)
+            fest.update(extract_details(soup))
 
             await page.close()
 
@@ -156,7 +148,6 @@ async def enrich(browser, fest, sem):
 
 async def enrich_all(browser, festivals):
     sem = asyncio.Semaphore(SEM_LIMIT)
-
     tasks = [enrich(browser, f, sem) for f in festivals if f.get("detail_url")]
     await asyncio.gather(*tasks)
 
@@ -170,7 +161,6 @@ async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
 
-        # INDIA CONTEXT (IMPORTANT)
         context = await browser.new_context(
             locale="en-IN",
             timezone_id="Asia/Kolkata"
@@ -183,12 +173,15 @@ async def main():
             url = MONTH_URL.format(month)
             print(f"Fetching {month}...")
 
-            await page.goto(url)
-            await page.wait_for_timeout(3000)
+            await page.goto(url, timeout=60000)
 
-            soup = BeautifulSoup(await page.content(), "lxml")
+            # 🔥 CRITICAL FIX
+            await page.wait_for_load_state("networkidle")
+
+            html = await page.content()
+            soup = BeautifulSoup(html, "lxml")
+
             data = extract_list(soup, url, month)
-
             all_festivals.extend(data)
 
         print(f"\nCollected: {len(all_festivals)}")
@@ -213,27 +206,11 @@ async def main():
             f.get("description","")
         )
 
-    # STEP 5: FINAL STRUCTURE
-    cleaned = []
+    # STEP 5: SAVE (IMPORTANT SAME NAME)
+    with open("hindu_festivals_2026_full.json", "w", encoding="utf-8") as f:
+        json.dump(final, f, indent=2, ensure_ascii=False)
 
-    for f in final:
-        cleaned.append({
-            "name": f.get("name"),
-            "date": f.get("date_raw"),
-            "month": f.get("month"),
-            "tithi_start": f.get("tithi_start"),
-            "tithi_end": f.get("tithi_end"),
-            "moonrise": f.get("moonrise"),
-            "description": f.get("description"),
-            "category": f.get("category"),
-            "detail_url": f.get("detail_url")
-        })
-
-    # SAVE
-    with open("hindu_festivals_2026_clean.json", "w", encoding="utf-8") as f:
-        json.dump(cleaned, f, indent=2, ensure_ascii=False)
-
-    print(f"\n✅ FINAL CLEAN DATA: {len(cleaned)} festivals")
+    print(f"\n✅ FINAL DATA: {len(final)} festivals saved")
 
 
 asyncio.run(main())
