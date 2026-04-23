@@ -45,11 +45,18 @@ def classify_use(name, desc):
 # -------------------------------
 # EXTRACT LIST (ROBUST)
 # -------------------------------
+from difflib import SequenceMatcher
+
+def similar(a, b):
+    return SequenceMatcher(None, a, b).ratio()
+
+
 def extract_list(soup, url, month):
+    festivals = []
+
+    # STEP 1: extract festival list
     text = soup.get_text("\n")
     lines = [l.strip() for l in text.split("\n") if l.strip()]
-
-    festivals = []
 
     for i in range(len(lines)):
         line = lines[i]
@@ -71,19 +78,40 @@ def extract_list(soup, url, month):
             except:
                 continue
 
-    # attach detail links
+    # STEP 2: collect ALL valid links
+    link_map = []
+
     for a in soup.find_all("a", href=True):
         href = a["href"]
+        text = clean_text(a.get_text())
 
-        if "-date-time" in href:
-            name = clean_text(a.get_text())
+        if not text or len(text) < 3:
+            continue
 
-            for f in festivals:
-                if name.lower() in f["name"].lower():
-                    f["detail_url"] = BASE + href
+        # accept all meaningful festival links
+        if any(x in href for x in ["/vrat/", "/sankranti/", "/festivals/"]):
+            full_url = BASE + href
+            link_map.append((text.lower(), full_url))
+
+    # STEP 3: smart matching (fuzzy)
+    for f in festivals:
+        fname = f["name"].lower()
+
+        best_score = 0
+        best_url = None
+
+        for lname, url_link in link_map:
+            score = similar(fname, lname)
+
+            if score > best_score:
+                best_score = score
+                best_url = url_link
+
+        # threshold to avoid wrong mapping
+        if best_score > 0.6:
+            f["detail_url"] = best_url
 
     return festivals
-
 
 # -------------------------------
 # EXTRACT DETAILS (CLEAN)
